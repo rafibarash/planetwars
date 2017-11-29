@@ -33,7 +33,7 @@ public class StrategyOne implements IStrategy{
                             eventsToExecute.add(planetOperations.transferPeople(visiblePlanet, nextPlanet, (long) Math.ceil(nextPlanet.getPopulation() * 1.2)));
                         }
                     }
-                }
+                } // Test
 //                else if (visiblePlanet.getOwner() == Owner.NEUTRAL) {
 //
 //                }
