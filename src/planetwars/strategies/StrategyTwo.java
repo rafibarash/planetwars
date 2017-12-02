@@ -4,7 +4,7 @@ import planetwars.publicapi.*;
 import java.util.*;
 
 
-public class StrategyOne implements IStrategy{
+public class StrategyTwo implements IStrategy{
     private Map<Integer, IPlanet> planetMap = new HashMap<>();
 
     @Override
@@ -43,6 +43,12 @@ public class StrategyOne implements IStrategy{
                         planetMap.put(nextPlanetID, nextPlanet);
                         planetMap.put(myPlanet.getId(), myPlanet);
                     }
+
+
+                } else if (visiblePlanet.getOwner() == Owner.NEUTRAL) {
+
+                } else if (visiblePlanet.getOwner() == Owner.OPPONENT) {
+
                 }
             }
         }
@@ -59,11 +65,11 @@ public class StrategyOne implements IStrategy{
     @Override
     public String getName () {
         return "StrategyOne";
-        }
+    }
 
     @Override
     public boolean compete () {
         return false;
-        }
+    }
 
 }
