@@ -2,6 +2,7 @@ package planetwars.core;
 
 import planetwars.publicapi.*;
 import planetwars.strategies.RandomStrategy;
+import planetwars.strategies.StrategyOne;
 
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -240,7 +241,7 @@ public final class PlanetWars implements IPlanetLookup {
 
     public static void main(String[] args) throws FileNotFoundException {
         IStrategy strategy1 = new RandomStrategy();
-        IStrategy strategy2 = new RandomStrategy();
+        IStrategy strategy2 = new StrategyOne();
         PlanetWars planetWars = new PlanetWars(strategy1, strategy2, "rings");
 
         int rounds = 0;
