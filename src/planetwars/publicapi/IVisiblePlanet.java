@@ -15,11 +15,6 @@ public interface IVisiblePlanet extends IPlanet {
 
     /**
      * Get the number of people the planet can sustain.
-     * <p>
-     * TODO: What happens if a planet has more people than the size? E.g. additional people are transferred after it is full.
-     * Proposal 1: People over the capacity are lost; it is impossible to have more than {@code getSize()} people on a planet.
-     * Proposal 2: People over the capacity are accepted, but no growth occurs above {@code getSize()} people.
-     * Proposal 3: People over the capacity are accepted, but during each time update a percentage of the people above {@code getSize()} are lost.
      */
     long getSize();
 

@@ -119,7 +119,7 @@ final class PathFinder {
         }
 
         if(toReverse) Collections.reverse(path);
-        path = bufferPath(path, time / (path.size() - 1), straight);
+        path = bufferPath(path, time, straight);
 
         if(straight) cachedStraightPaths.put(tuple3, path);
         else cachedPaths.put(tuple3, path);
@@ -127,20 +127,39 @@ final class PathFinder {
         return path;
     }
 
-    private List<Point2D> bufferPath(List<Point2D> path, double factor, boolean straight) {
+    private List<Point2D> bufferPath(List<Point2D> path, double time, boolean straight) {
 
         List<Point2D> bufferedPath = new ArrayList<>();
         Random rand = new Random();
+
+        double totalDistance = 0;
+        for (int i = 0; i < path.size() - 1; i++) {
+            Point2D src = path.get(i);
+            Point2D target = path.get(i + 1);
+
+            double xDiff = target.getX() - src.getX();
+            double yDiff = target.getY() - src.getY();
+
+            totalDistance += Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+        }
+
         int alt = Math.max(5, rand.nextInt(10));
         int phase = Math.max(15, rand.nextInt(20));
         for (int i = 0; i < path.size() - 1; i++) {
             Point2D src = path.get(i);
             Point2D target = path.get(i + 1);
 
-            double dx = (target.getX() - src.getX()) / factor;
-            double dy = (target.getY() - src.getY()) / factor;
+            double xDiff = target.getX() - src.getX();
+            double yDiff = target.getY() - src.getY();
 
-            for (int j = 0; j < factor; j++) {
+            double dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+
+            int howManyPoints = (int) ((dist / totalDistance) * time);
+
+            double dx = xDiff / howManyPoints;
+            double dy = yDiff / howManyPoints;
+
+            for (int j = 0; j < howManyPoints; j++) {
                 double x = src.getX() + (j * dx);
                 double y = src.getY() + (j * dy);
 

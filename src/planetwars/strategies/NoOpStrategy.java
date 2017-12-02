@@ -14,7 +14,7 @@ public class NoOpStrategy implements IStrategy {
 
     @Override
     public String getName() {
-        return "NoOpStrategy";
+        return "Dummy";
     }
 
     @Override

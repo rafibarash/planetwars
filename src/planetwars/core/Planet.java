@@ -174,52 +174,98 @@ final class Planet {
     }
 
     public void processShuttles() {
-        List<Shuttle> friendlyShuttlesArrived = new ArrayList<>();
-        List<Shuttle> hostileShuttlesArrived = new ArrayList<>();
+        if (this.owningPlayer == InternalPlayer.NEUTRAL) {
+            // If the planet is currently neutral, the person who is landing more troops gets it,
+            // with the population being the difference in arriving people. Neither player gets a
+            // defending bonus.
+            List <Shuttle> player1ShuttlesArrived = new ArrayList<>();
+            List <Shuttle> player2ShuttlesArrived = new ArrayList<>();
 
-        // Pull out the friendly and hostile shuttles
-        for (Shuttle shuttle : this.incomingShuttles) {
-            shuttle.moveCloser();
-            if (shuttle.getTurnsToArrival() == 0) {
-                if (shuttle.getOwningPlayer() == this.owningPlayer) {
-                    friendlyShuttlesArrived.add(shuttle);
-                } else {
-                    hostileShuttlesArrived.add(shuttle);
+            // Split shuttles based on owning player
+            for (Shuttle shuttle : this.incomingShuttles) {
+                shuttle.moveCloser();
+                if (shuttle.getTurnsToArrival() == 0) {
+                    if (shuttle.getOwningPlayer() == InternalPlayer.PLAYER1) {
+                        player1ShuttlesArrived.add(shuttle);
+                    } else {
+                        player2ShuttlesArrived.add(shuttle);
+                    }
                 }
             }
-        }
 
-        // Land all friendly shuttles
-        for (Shuttle shuttle : friendlyShuttlesArrived) {
-            if (shuttle.getOwningPlayer() == this.owningPlayer) {
-                this.population += shuttle.getNumberPeople();
+            // Total up population for each player
+            int player1Pop = 0;
+            int player2Pop = 0;
+            for (Shuttle shuttle : player1ShuttlesArrived) {
+                player1Pop += shuttle.getNumberPeople();
             }
-        }
-
-        // Calculate the strength of the incoming attack
-        if (hostileShuttlesArrived.size() > 0) {
-            long attackingPopulation = 0;
-            InternalPlayer attackingPlayer = hostileShuttlesArrived.get(0).getOwningPlayer();
-
-            for (Shuttle shuttle : hostileShuttlesArrived) {
-                attackingPopulation += shuttle.getNumberPeople();
+            for (Shuttle shuttle : player2ShuttlesArrived) {
+                player2Pop += shuttle.getNumberPeople();
             }
 
-            long effectivePopulation = (long) (1.1 * this.population);
-            if (effectivePopulation < attackingPopulation) {
-                this.owningPlayer = attackingPlayer;
-                this.population = attackingPopulation - effectivePopulation;
-            } else if (effectivePopulation == attackingPopulation) {
-                this.owningPlayer = InternalPlayer.NEUTRAL;
-                this.population = 0;
+            // Assign ownership to the person with more people landing
+            this.population = Math.abs(player1Pop - player2Pop);
+            if (player1Pop > player2Pop) {
+                this.owningPlayer = InternalPlayer.PLAYER1;
+            } else if (player1Pop < player2Pop) {
+                this.owningPlayer = InternalPlayer.PLAYER2;
             } else {
-                this.population = Math.min(this.population, effectivePopulation - attackingPopulation);
+                assert this.owningPlayer == InternalPlayer.NEUTRAL;
             }
-        }
 
+            this.incomingShuttles.removeAll(player1ShuttlesArrived);
+            this.incomingShuttles.removeAll(player2ShuttlesArrived);
+        } else {
+            // Someone owns the planet; we'll land all friendly shuttles first, and then all
+            // hostile shuttles. The owning player gets a defensive bonus.
+            List<Shuttle> friendlyShuttlesArrived = new ArrayList<>();
+            List<Shuttle> hostileShuttlesArrived = new ArrayList<>();
+
+            // Pull out the friendly and hostile shuttles
+            for (Shuttle shuttle : this.incomingShuttles) {
+                shuttle.moveCloser();
+                if (shuttle.getTurnsToArrival() == 0) {
+                    if (shuttle.getOwningPlayer() == this.owningPlayer) {
+                        friendlyShuttlesArrived.add(shuttle);
+                    } else {
+                        hostileShuttlesArrived.add(shuttle);
+                    }
+                }
+            }
+
+            // Land all friendly shuttles
+            for (Shuttle shuttle : friendlyShuttlesArrived) {
+                if (shuttle.getOwningPlayer() == this.owningPlayer) {
+                    this.population += shuttle.getNumberPeople();
+                }
+            }
+
+            if (hostileShuttlesArrived.size() > 0) {
+                long attackingPopulation = 0;
+                InternalPlayer attackingPlayer = hostileShuttlesArrived.get(0).getOwningPlayer();
+
+                // Calculate the strength of the incoming attack
+                for (Shuttle shuttle : hostileShuttlesArrived) {
+                    attackingPopulation += shuttle.getNumberPeople();
+                }
+
+                // The defending player gets a bonus
+                long effectivePopulation = (long) (1.1 * this.population);
+                if (effectivePopulation < attackingPopulation) {
+                    this.owningPlayer = attackingPlayer;
+                    this.population = attackingPopulation - effectivePopulation;
+                } else if (effectivePopulation == attackingPopulation) {
+                    this.owningPlayer = InternalPlayer.NEUTRAL;
+                    this.population = 0;
+                } else {
+                    this.population = Math.min(this.population, effectivePopulation - attackingPopulation);
+                }
+            }
+
+            this.incomingShuttles.removeAll(friendlyShuttlesArrived);
+            this.incomingShuttles.removeAll(hostileShuttlesArrived);
+        }
         assert this.population >= 0;
-        this.incomingShuttles.removeAll(friendlyShuttlesArrived);
-        this.incomingShuttles.removeAll(hostileShuttlesArrived);
     }
 
     public void shrink() {

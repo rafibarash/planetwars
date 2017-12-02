@@ -5,45 +5,60 @@ import planetwars.publicapi.IStrategy;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
+import java.util.Random;
 
 public final class GameWindow extends JFrame {
 
     // Main panels
-    private JPanel main; // Hosts the window
-    private JPanel game; // Hosts the actual game
+    private JPanel main;                // Hosts the window
+    private JScrollPane gameScroll;     // Handles small screen sizes
+    private JPanel game;                // Hosts the actual game
 
-    // Control related swings
+    // Game controls
     private JPanel control;
-    private JPanel selectorPane;
-    private JPanel labelPane;
-    private JPanel selectionPane;
-    // Buttons
+
+    // Game config swings
+    private JPanel configLayout;
+    private JPanel configPane;
+    private JPanel selectorLabels;
+    private JPanel selectorBoxes;
+    private JComboBox player1Selector;
+    private JComboBox player2Selector;
+    private JComboBox graphSelector;
+    private JPanel randomGraphPane;
+    private JButton randomGraphButton;
+
+    // GUI swings
+    private JPanel uiLayout;
+    private JPanel uiPane;
+    private JPanel fpsPane;
+    private JSpinner fpsSpinner;
+    private JPanel pathPane;
+    private JButton pathButton;
+
+    // Game flow swings
+    private JPanel buttonLayout;
+    private JPanel buttonPane;
     private JButton startGameButton;
     private JButton newGameButton;
     private JButton exitButton;
     private JButton pauseGameButton;
-    private JPanel playerPane;
-    private JPanel buttonPane;
-    private JPanel fpsPane;
-    private JSpinner fpsSpinner;
-    // Selectors
-    private JComboBox player1Selector;
-    private JComboBox player2Selector;
-    private JComboBox graphSelector;
+
 
     private Class<? extends IStrategy> strategy1Class;
     private Class<? extends IStrategy> strategy2Class;
 
     private PlanetWarsFrame gameFrame;
 
-    public static final int GAME_WINDOW_WIDTH = 1200;
-    public static final int GAME_WINDOW_HEIGHT = 1000;
+    private static final int GAME_WINDOW_WIDTH = (int) Math.min(1200, Toolkit.getDefaultToolkit().getScreenSize().getWidth() - 50);
+    private static final int GAME_WINDOW_HEIGHT = (int) Math.min(1000, Toolkit.getDefaultToolkit().getScreenSize().getHeight() - 50);
 
-    public static final int PLANET_WARS_WIDTH = 1000;
-    public static final int PLANET_WARS_HEIGHT = 1000;
+    static final int PLANET_WARS_WIDTH = 1000;
+    static final int PLANET_WARS_HEIGHT = 950;
 
     public GameWindow() throws FileNotFoundException {
         setSize(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT);
@@ -51,6 +66,28 @@ public final class GameWindow extends JFrame {
         initButtons();
         initSpinner();
         initSelectors();
+
+        initGame();
+    }
+
+    public GameWindow(Class<? extends IStrategy> strategyClass, boolean isPlayerOne) throws FileNotFoundException {
+        if (isPlayerOne) {
+            this.strategy1Class = strategyClass;
+        } else {
+            this.strategy2Class = strategyClass;
+        }
+
+        setSize(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT);
+        add(main);
+        initButtons();
+        initSpinner();
+        initSelectors();
+
+        if (isPlayerOne) {
+            this.player1Selector.setEnabled(false);
+        } else {
+            this.player2Selector.setEnabled(false);
+        }
 
         initGame();
     }
@@ -64,7 +101,9 @@ public final class GameWindow extends JFrame {
         initButtons();
         initSpinner();
         initSelectors();
-        disablePlayerSelectors();
+
+        this.player1Selector.setEnabled(false);
+        this.player2Selector.setEnabled(false);
 
         initGame();
     }
@@ -73,14 +112,17 @@ public final class GameWindow extends JFrame {
         IStrategy player1;
         IStrategy player2;
 
-        if (this.strategy1Class == null || this.strategy2Class == null) {
+        if (this.strategy1Class == null) {
             final String jar1 = String.valueOf(player1Selector.getSelectedItem());
-            final String jar2 = String.valueOf(player2Selector.getSelectedItem());
-
             player1 = Assets.loadPlayer(jar1);
-            player2 = Assets.loadPlayer(jar2);
         } else {
             player1 = Assets.loadPlayer(strategy1Class);
+        }
+
+        if (this.strategy2Class == null) {
+            final String jar2 = String.valueOf(player2Selector.getSelectedItem());
+            player2 = Assets.loadPlayer(jar2);
+        } else {
             player2 = Assets.loadPlayer(strategy2Class);
         }
 
@@ -96,16 +138,18 @@ public final class GameWindow extends JFrame {
 
         gameFrame = new PlanetWarsFrame(PLANET_WARS_WIDTH, PLANET_WARS_HEIGHT, "PlanetWars", wars);
         game.add(gameFrame);
+        game.setPreferredSize(new Dimension(PLANET_WARS_WIDTH, PLANET_WARS_HEIGHT));
         gameFrame.pause();
     }
-
 
     private void initButtons() {
         startGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 gameFrame.start();
-                graphSelector.setEnabled(false);
+                toggleGraphSelectors(false);
+                startGameButton.setEnabled(false);
+                pauseGameButton.setEnabled(true);
             }
         });
 
@@ -113,7 +157,9 @@ public final class GameWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 gameFrame.pause();
-                graphSelector.setEnabled(true);
+                toggleGraphSelectors(true);
+                startGameButton.setEnabled(true);
+                pauseGameButton.setEnabled(false);
             }
         });
 
@@ -128,7 +174,9 @@ public final class GameWindow extends JFrame {
                 }
                 gameFrame.pause();
                 gameFrame.repaint();
-                graphSelector.setEnabled(true);
+                toggleGraphSelectors(true);
+                startGameButton.setEnabled(true);
+                pauseGameButton.setEnabled(false);
             }
         });
 
@@ -142,6 +190,7 @@ public final class GameWindow extends JFrame {
 
     private void initSpinner() {
         fpsSpinner.setModel(new SpinnerNumberModel(60, 1, 60, 1));
+        ((JSpinner.DefaultEditor) fpsSpinner.getEditor()).getTextField().setEditable(false);
         fpsSpinner.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -150,17 +199,17 @@ public final class GameWindow extends JFrame {
         });
     }
 
-    private void disablePlayerSelectors() {
-        player1Selector.setEnabled(false);
-        player2Selector.setEnabled(false);
+    private void toggleGraphSelectors(boolean enable) {
+        graphSelector.setEnabled(enable);
+        randomGraphButton.setEnabled(enable);
     }
 
     private void initSelectors() {
-        initJarSelectors();
-        initMapSelector();
+        initPlayerConfigs();
+        initGraphConfigs();
     }
 
-    private void initJarSelectors() {
+    private void initPlayerConfigs() {
         String[] strategies = Assets.getStrategies();
 
         assert strategies != null;
@@ -187,11 +236,11 @@ public final class GameWindow extends JFrame {
         });
     }
 
-    private void initMapSelector() {
-        String[] maps = Assets.getGraphs();
+    private void initGraphConfigs() {
+        String[] graphs = Assets.getGraphs();
 
-        for (String map : maps) {
-            String clean = map.replaceAll(".dot", "");
+        for (String graph : graphs) {
+            String clean = graph.replaceAll(".dot", "");
             graphSelector.addItem(clean);
         }
 
@@ -204,6 +253,15 @@ public final class GameWindow extends JFrame {
                 } catch (FileNotFoundException e1) {
                     e1.printStackTrace();
                 }
+            }
+        });
+
+        randomGraphButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Random rand = new Random();
+                graphSelector.setSelectedIndex(rand.nextInt(graphs.length));
+                gameFrame.repaint();
             }
         });
     }

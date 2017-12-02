@@ -17,7 +17,7 @@ final class Move {
     public Move(Planet src, Planet target, Shuttle shuttle, int time, PathFinder pathFinder) {
         this.shuttle = shuttle;
         this.time = time;
-        this.who = src.getOwningPlayer();
+        this.who = shuttle.getOwningPlayer();
 
         this.src = src;
         this.target = target;

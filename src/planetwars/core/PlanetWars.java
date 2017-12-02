@@ -1,13 +1,13 @@
 package planetwars.core;
 
 import planetwars.publicapi.*;
-import planetwars.strategies.RandomMoveStrategy;
+import planetwars.strategies.RandomStrategy;
 
 import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.concurrent.*;
 
-final class PlanetWars implements IPlanetLookup {
+public final class PlanetWars implements IPlanetLookup {
     private static final int MOVE_TIMEOUT = 1;
     private static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
@@ -20,10 +20,15 @@ final class PlanetWars implements IPlanetLookup {
     private boolean player1Turn;
     private boolean gameOver;
 
+    private boolean async;
     private ExecutorService moveExecutor; // Handles timeouts
     private InternalPlayer winner;
 
     public PlanetWars(IStrategy player1, IStrategy player2, String graph) throws FileNotFoundException {
+        this(player1, player2, graph, true);
+    }
+
+    public PlanetWars(IStrategy player1, IStrategy player2, String graph, boolean async) throws FileNotFoundException {
         this.player1 = player1;
         this.player2 = player2;
         this.player1Operations = new PlanetOperations(this, InternalPlayer.PLAYER1);
@@ -31,7 +36,10 @@ final class PlanetWars implements IPlanetLookup {
         this.player1Turn = true;
         this.gameOver = false;
 
-        this.moveExecutor = Executors.newSingleThreadExecutor();
+        this.async = async;
+        if (async) {
+            this.moveExecutor = Executors.newSingleThreadExecutor();
+        }
         this.loadGraph(graph);
     }
 
@@ -39,7 +47,7 @@ final class PlanetWars implements IPlanetLookup {
         this.planetMap = SystemLoader.load(graph, this);
     }
 
-    public void gameTick() {
+    void gameTick() {
         if (this.gameOver) {
             return;
         }
@@ -73,20 +81,28 @@ final class PlanetWars implements IPlanetLookup {
         Queue<IEvent> eventsToProcess = new ArrayDeque<>();
         List<IPlanet> snapshot = getPlanetsSnapshot(playerToken);
 
-        // Let the player make their moves
-        Future<?> turn = moveExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-                player.takeTurn(snapshot, operations, eventsToProcess);
+        if (async) {
+            // Let the player make their moves
+            Future<?> turn = moveExecutor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    player.takeTurn(snapshot, operations, eventsToProcess);
+                }
+            });
+            try {
+                turn.get(MOVE_TIMEOUT, TIME_UNIT);
+            } catch (InterruptedException | TimeoutException e) {
+                // Turn skips, multiple catches in case we want to do something else
+                // due to timeouts
+            } catch (ExecutionException e) {
+                // welp, ok then
             }
-        });
-        try {
-            turn.get(MOVE_TIMEOUT, TIME_UNIT);
-        } catch (InterruptedException | TimeoutException e) {
-            // Turn skips, multiple catches in case we want to do something else
-            // due to timeouts
-        } catch (ExecutionException e) {
-            // welp, ok then
+        } else {
+            try {
+                player.takeTurn(snapshot, operations, eventsToProcess);
+            } catch (Exception e) {
+                // welp, ok then
+            }
         }
 
         // Process the player's moves
@@ -105,7 +121,7 @@ final class PlanetWars implements IPlanetLookup {
         this.player1Turn = !this.player1Turn;
     }
 
-    public boolean hasWon(InternalPlayer player) {
+    boolean hasWon(InternalPlayer player) {
         for (Planet planet : this.planetMap.values()) {
             // If the other player owns a planet, the game is still going
             if (planet.getOwnerFromViewer(player) == Owner.OPPONENT) {
@@ -119,16 +135,18 @@ final class PlanetWars implements IPlanetLookup {
                 }
             }
         }
-        this.moveExecutor.shutdownNow();
+        if (async) {
+            this.moveExecutor.shutdownNow();
+        }
         winner = player;
         return true;
     }
 
-    public boolean isOver() {
+    boolean isOver() {
         return gameOver;
     }
 
-    public InternalPlayer getWinner() {
+    InternalPlayer getWinner() {
         return gameOver ? winner : InternalPlayer.NEUTRAL;
     }
 
@@ -142,7 +160,7 @@ final class PlanetWars implements IPlanetLookup {
         return this.planetMap.values();
     }
 
-    public List<IPlanet> getPlanetsSnapshot(InternalPlayer viewer) {
+    List<IPlanet> getPlanetsSnapshot(InternalPlayer viewer) {
         // Record which planets are visible
         HashMap<Integer, Planet> visiblePlanets = new HashMap<>();
         for (Planet planet : this.planetMap.values()) {
@@ -182,21 +200,47 @@ final class PlanetWars implements IPlanetLookup {
         return planetMap.toString();
     }
 
-    public void setPlayer1(IStrategy player) {
+    void setPlayer1(IStrategy player) {
         this.player1 = player;
     }
 
-    public void setPlayer2(IStrategy player) {
+    void setPlayer2(IStrategy player) {
         this.player2 = player;
     }
 
-    public void setObserver(PlanetWarsFrame observer) {
+    void setObserver(PlanetWarsFrame observer) {
         this.observer = observer;
     }
 
+    /**
+     * Runs the simulation to completion.
+     *
+     * @param maxTicks The maximum number of time-steps to run the simulation for. 0 indicates indefinitely.
+     * @return The winning strategy
+     */
+    public IStrategy runToCompletion(int maxTicks) {
+        if (maxTicks == 0) {
+            while (!hasWon(InternalPlayer.PLAYER1) && !hasWon(InternalPlayer.PLAYER2)) {
+                gameTick();
+            }
+        } else {
+            for (int tick = 0; tick < maxTicks && !hasWon(InternalPlayer.PLAYER1) && !hasWon(InternalPlayer.PLAYER2); tick++) {
+                gameTick();
+            }
+        }
+
+        if (hasWon(InternalPlayer.PLAYER1)) {
+            return player1;
+        } else if (hasWon(InternalPlayer.PLAYER2)) {
+            return player2;
+        } else {
+            return null;
+        }
+    }
+
     public static void main(String[] args) throws FileNotFoundException {
-        IStrategy strategy1 = new RandomMoveStrategy();
-        IStrategy strategy2 = new RandomMoveStrategy();
+        IStrategy strategy1 = new RandomStrategy();
+        IStrategy strategy2 = new RandomStrategy();
         PlanetWars planetWars = new PlanetWars(strategy1, strategy2, "rings");
 
         int rounds = 0;

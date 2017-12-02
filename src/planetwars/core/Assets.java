@@ -11,7 +11,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 
-final class Assets {
+public final class Assets {
     private static final String STRATEGIES_DIR = "strategies/";
     private static final String GRAPHS_DIR = "graphs/";
     private static final String IMG_DIR = "img/";
