@@ -2,11 +2,12 @@ package planetwars.publicapi;
 
 import planetwars.core.GameWindow;
 import planetwars.strategies.*;
-
 import javax.swing.*;
 import java.io.FileNotFoundException;
 
+
 public class Driver {
+
     public static void main(String[] args) {
         try {
             // You can either instantiate the GameWindow by specifying two strategy classes directly, or by
@@ -23,4 +24,5 @@ public class Driver {
             e.printStackTrace();
         }
     }
+
 }
