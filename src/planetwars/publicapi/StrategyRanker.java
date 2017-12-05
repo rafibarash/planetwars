@@ -8,17 +8,21 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 public class StrategyRanker {
-    public static final int NUM_TRIALS = 7;
+    public static final int NUM_TRIALS = 5;
 
     public static void main(String[] args) throws IllegalAccessException, InstantiationException, FileNotFoundException {
         // List of all strategies to compare
         List<IStrategyProvider> strategyProviders = new ArrayList<>();
 //        strategyProviders.add(new ClassStrategyProvider(StrategyOne.class));
-        strategyProviders.add(new ClassStrategyProvider(StrategyTwo.class));
+//        strategyProviders.add(new ClassStrategyProvider(StrategyTwo.class));
+//        strategyProviders.add(new ClassStrategyProvider(Strategy.class));
+        strategyProviders.add(new JarStrategyProvider("project4"));
 //        strategyProviders.add(new ClassStrategyProvider(RandomStrategy.class));
 //        strategyProviders.add(new JarStrategyProvider("AI1_obf"));
 //        strategyProviders.add(new JarStrategyProvider("AI2_obf"));
         strategyProviders.add(new JarStrategyProvider("AI3_obf"));
+//        strategyProviders.add(new JarStrategyProvider("pipeline_obf"));
+//        strategyProviders.add(new JarStrategyProvider("Zoeller8_obf"));
 
         List<String> graphs = new ArrayList<>();
         graphs.add("rings");

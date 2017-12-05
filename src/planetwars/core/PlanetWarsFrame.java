@@ -12,7 +12,7 @@ import static planetwars.core.InternalPlayer.PLAYER1;
 final class PlanetWarsFrame extends AnimationFrame {
     static final int BUCKET_WIDTH = 80;
     static final int PLANET_RADIUS = 40;
-    static final int FRAMES_PER_TURN = 30;
+    static final int FRAMES_PER_TURN = 20;
     static final int EDGE_POINT_SPACING = 10;
 
     private final int NUM_MOBILE_STARS = 50;
