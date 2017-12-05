@@ -107,7 +107,7 @@ public class StrategyTwo implements IStrategy{
 
     @Override
     public String getName () {
-        return "StrategyOne";
+        return "StrategyTwo";
     }
 
     @Override

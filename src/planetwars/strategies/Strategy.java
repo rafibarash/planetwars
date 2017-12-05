@@ -7,21 +7,17 @@ import java.util.*;
 public class Strategy implements IStrategy{
     private Map<Integer, IPlanet> planetMap = new HashMap<>();
     private PriorityQueue<Integer> planetEdgePQ;
-    private PriorityQueue<Integer> enemyNeighborPQ;
-    private List<IVisiblePlanet> IVPlanets;
     private List<IVisiblePlanet> OwnedPlanets;
 
     @Override
     public void takeTurn(List<IPlanet> planets, IPlanetOperations planetOperations, Queue<IEvent> eventsToExecute) {
         // Initialize ArrayList and HashMap data structures
         OwnedPlanets = new ArrayList<>();
-        IVPlanets = new ArrayList<>();
         for (IPlanet planet : planets) {
             int id = planet.getId();
             planetMap.put(id, planet);
             if (planet instanceof IVisiblePlanet){
                 IVisiblePlanet visiblePlanet = (IVisiblePlanet) planet;
-                IVPlanets.add(visiblePlanet);
                 if(visiblePlanet.getOwner()==Owner.SELF){
                     OwnedPlanets.add(visiblePlanet);
                 }
@@ -38,11 +34,6 @@ public class Strategy implements IStrategy{
             Comparator<Integer> planetEdgeComparator = new PlanetEdgeComparator();
             planetEdgePQ = new PriorityQueue<>(edges.size() + 1, planetEdgeComparator);
             planetEdgePQ.add(myPlanet.getId());
-
-            //Initialize enemyNeighborPQ
-            Comparator<Integer> enemyNeighborComparator = new EnemyNeighborComparator();
-            enemyNeighborPQ = new PriorityQueue<>(edges.size() + 1, enemyNeighborComparator);
-            enemyNeighborPQ.add(myPlanet.getId());
 
             // for use after iterating through neighbors
             boolean surroundedByMyPlanets = true;
@@ -71,14 +62,6 @@ public class Strategy implements IStrategy{
                 }
             }
 
-
-            // if planet next to planet I own which neighbors enemy, help out
-            IVisiblePlanet priorityNeighborEnemyPlanet = (IVisiblePlanet) findPlanet(planetEdgePQ.peek());
-            if (surroundedByMyPlanets && priorityNeighborEnemyPlanet != myPlanet) {
-                eventsToExecute.add(planetOperations.transferPeople(myPlanet, priorityNeighborEnemyPlanet, (long) Math.ceil(pop * 0.5)));
-                pop -= Math.ceil(pop * 0.5);
-            }
-
             // if planet in good situation, send people to neighbor planet with most edges
             IVisiblePlanet priorityEdgePlanet = (IVisiblePlanet) findPlanet(planetEdgePQ.peek());
             if (pop >= 0.54 * myPlanet.getSize() &&
@@ -95,20 +78,8 @@ public class Strategy implements IStrategy{
         return planet;
     }
 
-    private int getNumEnemyNeighbors(IVisiblePlanet planet) {
-        int numEnemyNeighbors = 0;
-        Iterator<IEdge> edgesIterator = planet.getEdges().iterator();
-        while (edgesIterator.hasNext()) {
-            IVisiblePlanet neighbor = (IVisiblePlanet) findPlanet(edgesIterator.next().getDestinationPlanetId());
-            if (neighbor.getOwner() == Owner.OPPONENT) {
-                numEnemyNeighbors++;
-            }
-        }
-        return numEnemyNeighbors;
-    }
 
     private class PlanetEdgeComparator implements Comparator<Integer> {
-
         @Override
         public int compare(Integer p1, Integer p2) {
             IPlanet planet1 = findPlanet(p1);
@@ -117,23 +88,11 @@ public class Strategy implements IStrategy{
         }
     }
 
-    private class EnemyNeighborComparator implements Comparator<Integer> {
-
-        @Override
-        public int compare(Integer p1, Integer p2) {
-            IVisiblePlanet planet1 = (IVisiblePlanet)findPlanet(p1);
-            IVisiblePlanet planet2 = (IVisiblePlanet)findPlanet(p2);
-            Iterator<IEdge> edgesIterator = planet1.getEdges().iterator();
-            int numEnemyNeighbors1 = getNumEnemyNeighbors(planet1);
-            int numEnemyNeighbors2 = getNumEnemyNeighbors(planet2);
-            return -1*Integer.compare(numEnemyNeighbors1, numEnemyNeighbors2);
-        }
-    }
 
 
     @Override
     public String getName () {
-        return "Real Strategy";
+        return "Guardians Of The Galaxy";
     }
 
     @Override
