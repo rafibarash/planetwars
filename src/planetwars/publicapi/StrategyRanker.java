@@ -13,12 +13,12 @@ public class StrategyRanker {
     public static void main(String[] args) throws IllegalAccessException, InstantiationException, FileNotFoundException {
         // List of all strategies to compare
         List<IStrategyProvider> strategyProviders = new ArrayList<>();
-        strategyProviders.add(new ClassStrategyProvider(StrategyOne.class));
+//        strategyProviders.add(new ClassStrategyProvider(StrategyOne.class));
         strategyProviders.add(new ClassStrategyProvider(StrategyTwo.class));
 //        strategyProviders.add(new ClassStrategyProvider(RandomStrategy.class));
 //        strategyProviders.add(new JarStrategyProvider("AI1_obf"));
 //        strategyProviders.add(new JarStrategyProvider("AI2_obf"));
-//        strategyProviders.add(new JarStrategyProvider("AI3_obf"));
+        strategyProviders.add(new JarStrategyProvider("AI3_obf"));
 
         List<String> graphs = new ArrayList<>();
         graphs.add("rings");
