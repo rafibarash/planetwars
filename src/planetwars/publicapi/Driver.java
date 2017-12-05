@@ -13,7 +13,7 @@ public class Driver {
             // You can either instantiate the GameWindow by specifying two strategy classes directly, or by
             // using the default constructor and picking the strategies at run time
 //            GameWindow window = new GameWindow();
-            GameWindow window = new GameWindow(StrategyOne.class, RandomStrategy.class);
+            GameWindow window = new GameWindow(StrategyTwo.class, RandomStrategy.class);
 
             window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             window.setVisible(true);

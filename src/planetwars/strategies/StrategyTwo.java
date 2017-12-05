@@ -6,14 +6,15 @@ import java.util.*;
 
 public class StrategyTwo implements IStrategy{
     private Map<Integer, IPlanet> planetMap = new HashMap<>();
-    private PriorityQueue<IPlanet> planetPQ;
-    private int turn=0;
+//    private PriorityQueue<IPlanet> planetPQ;
+//    private int turn=0;
 
     @Override
     public void takeTurn(List<IPlanet> planets, IPlanetOperations planetOperations, Queue<IEvent> eventsToExecute) {
-        if (turn == 0) {
-            initializePlanetPriority();
-        }
+//        if (turn == 0) {
+//            initializePlanetPriority();
+//            turn++;
+//        }
         for (IPlanet planet : planets) {
             int id = planet.getId();
             planetMap.put(id, planet);
@@ -29,8 +30,9 @@ public class StrategyTwo implements IStrategy{
                     Set<IEdge> edges = visiblePlanet.getEdges();
                     Iterator<IEdge> iterator = edges.iterator();
 
-                    //TODO
-                    // Check if population nearing capacity and if should send to planet with more nodes
+                    boolean myPlanetHasMostEdges = true;
+                    IVisiblePlanet planetWithMostEdges = myPlanet;
+                    boolean surroundedByMyPlanets = true;
 
                     while (iterator.hasNext()) {
                         IEdge nextEdge = iterator.next();
@@ -50,6 +52,23 @@ public class StrategyTwo implements IStrategy{
 
                         planetMap.put(nextPlanetID, nextPlanet);
                         planetMap.put(myPlanet.getId(), myPlanet);
+
+                        // Check if neighboring planet has more edges than current
+                        if (nextPlanet.getEdges().size() > myPlanet.getEdges().size()) {
+                            planetWithMostEdges = nextPlanet;
+                            myPlanetHasMostEdges = false;
+                        }
+
+                        if (nextPlanet.getOwner() != Owner.SELF) {
+                            surroundedByMyPlanets = false;
+                        }
+                    }
+
+                    if (pop >= 0.2*myPlanet.getSize() &&
+                            !myPlanetHasMostEdges &&
+                            surroundedByMyPlanets) {
+                        eventsToExecute.add(planetOperations.transferPeople(myPlanet, planetWithMostEdges, (long)Math.ceil(pop*0.1)));
+                        pop -= pop*0.1;
                     }
                 }
             }
@@ -63,32 +82,27 @@ public class StrategyTwo implements IStrategy{
         return planet;
     }
 
-    // add planets to the queue in order of number of edges
-    public void initializePlanetPriority() {
-        Comparator<IPlanet> comparator = new PlanetEdgeComparator();
-        int numPlanets = planetMap.size();
-        planetPQ = new PriorityQueue<IPlanet>(numPlanets, comparator);
-        for (IPlanet planet : planetMap.values()) {
-            planetPQ.add(planet);
-        }
-    }
-
-    // TODO
-    public int findInPQ(IPlanet planet) {
-
-    }
-
-    private class PlanetEdgeComparator implements Comparator<IPlanet> {
-        @Override
-        public int compare(IPlanet p1, IPlanet p2) {
-            if (p1.getEdges().size() < p2.getEdges().size()) {
-                return -1;
-            } else if (p1.getEdges().size() > p2.getEdges().size()) {
-                return 1;
-            }
-            return 0;
-        }
-    }
+//    // add planets to the queue in order of number of edges
+//    public void initializePlanetPriority() {
+//        Comparator<IPlanet> comparator = new PlanetEdgeComparator();
+//        int numPlanets = planetMap.size();
+//        planetPQ = new PriorityQueue<IPlanet>(numPlanets, comparator);
+//        for (IPlanet planet : planetMap.values()) {
+//            planetPQ.add(planet);
+//        }
+//    }
+//
+//    private class PlanetEdgeComparator implements Comparator<IPlanet> {
+//        @Override
+//        public int compare(IPlanet p1, IPlanet p2) {
+//            if (p1.getEdges().size() < p2.getEdges().size()) {
+//                return -1;
+//            } else if (p1.getEdges().size() > p2.getEdges().size()) {
+//                return 1;
+//            }
+//            return 0;
+//        }
+//    }
 
 
     @Override
