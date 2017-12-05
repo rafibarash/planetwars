@@ -29,6 +29,9 @@ public class StrategyTwo implements IStrategy{
                     Set<IEdge> edges = visiblePlanet.getEdges();
                     Iterator<IEdge> iterator = edges.iterator();
 
+                    //TODO
+                    // Check if population nearing capacity and if should send to planet with more nodes
+
                     while (iterator.hasNext()) {
                         IEdge nextEdge = iterator.next();
                         int nextPlanetID = nextEdge.getDestinationPlanetId();
