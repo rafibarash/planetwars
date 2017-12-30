@@ -4,6 +4,7 @@ import planetwars.core.GameWindow;
 import planetwars.strategies.*;
 import javax.swing.*;
 import java.io.FileNotFoundException;
+import java.util.Random;
 
 
 public class Driver {
@@ -13,7 +14,7 @@ public class Driver {
             // You can either instantiate the GameWindow by specifying two strategy classes directly, or by
             // using the default constructor and picking the strategies at run time
             GameWindow window = new GameWindow();
-//            GameWindow window = new GameWindow(StrategyTwo.class, StrategyOne.class);
+//            GameWindow window = new GameWindow(NoOpStrategy.class, RandomStrategy.class);
 
             window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             window.setVisible(true);

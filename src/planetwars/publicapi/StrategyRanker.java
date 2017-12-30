@@ -13,8 +13,6 @@ public class StrategyRanker {
     public static void main(String[] args) throws IllegalAccessException, InstantiationException, FileNotFoundException {
         // List of all strategies to compare
         List<IStrategyProvider> strategyProviders = new ArrayList<>();
-//        strategyProviders.add(new ClassStrategyProvider(StrategyOne.class));
-//        strategyProviders.add(new ClassStrategyProvider(StrategyTwo.class));
 //        strategyProviders.add(new ClassStrategyProvider(Strategy.class));
         strategyProviders.add(new JarStrategyProvider("project4"));
 //        strategyProviders.add(new ClassStrategyProvider(RandomStrategy.class));
